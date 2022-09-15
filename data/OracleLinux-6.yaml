@@ -1,0 +1,3 @@
+---
+#eraagent::service_manage: False
+eraagent::service_provider: upstart

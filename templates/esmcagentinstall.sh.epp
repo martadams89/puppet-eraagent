@@ -1,0 +1,132 @@
+#!/bin/sh -e
+# ESET Security Management Center
+# Copyright (c) 1992-2021 ESET, spol. s r.o. All Rights Reserved
+
+cleanup_file="$(mktemp -q)"
+finalize()
+{
+  set +e
+  if test -f "$cleanup_file"
+  then
+    while read f
+    do
+      rm -f "$f"
+    done < "$cleanup_file"
+    rm -f "$cleanup_file"
+  fi
+}
+
+trap 'finalize' HUP INT QUIT TERM EXIT
+
+eraa_server_hostname=<%= $eraagent::eraa_server_hostname %>
+eraa_server_port=<%= $eraagent::eraa_server_port %>
+<% if $eraagent::eraa_server_comany_name { -%>
+eraa_server_company_name=<%= $eraagent::eraa_server_company_name %>
+<% } else { -%>
+eraa_server_company_name=""
+<% } %>
+eraa_peer_cert_b64=<%= $eraagent::eraa_peer_cert_b64 %>
+eraa_peer_cert_pwd=<%= $eraagent::eraa_peer_cert_pwd %>
+eraa_ca_cert_b64=<%= $eraagent::eraa_ca_cert_b64 %>
+eraa_product_uuid=<%= $eraagent::eraa_product_uuid %>
+eraa_initial_sg_token=<%= $eraagent::eraa_initial_sg_token %>
+eraa_policy_data=<%= $eraagent::eraa_policy_data %>
+
+arch=$(uname -m)
+eraa_installer_url="http://repository.eset.com/v1/com/eset/apps/business/era/agent/v9/9.0.2141.0/agent_linux_i386.sh"
+eraa_installer_checksum="1b377960136585f91b1206d5523f45b2b88cc9fc"
+
+if $(echo "$arch" | grep -E "^(x86_64|amd64)$" 2>&1 > /dev/null)
+then
+    eraa_installer_url="http://repository.eset.com/v1/com/eset/apps/business/era/agent/v9/9.0.2141.0/agent_linux_x86_64.sh"
+    eraa_installer_checksum="b06bc8e8cd923eff381bcbc2afaf8f63976c0fe4"
+fi
+
+echo "ESET Management Agent live installer script. Copyright © 1992-2021 ESET, spol. s r.o. - All rights reserved."
+
+if test ! -z $eraa_server_company_name
+then
+  echo " * CompanyName: $eraa_server_company_name"
+fi
+echo " * Hostname: $eraa_server_hostname"
+echo " * Port: $eraa_server_port"
+echo " * Installer: $eraa_installer_url"
+echo
+
+if test -z $eraa_installer_url
+then
+  echo "No installer available for '$arch' arhitecture."
+  exit 1
+fi
+
+local_cert_path="$(mktemp -q -u)"
+echo $eraa_peer_cert_b64 | base64 -d > "$local_cert_path" && echo "$local_cert_path" >> "$cleanup_file"
+
+if test -n "$eraa_ca_cert_b64"
+then
+  local_ca_path="$(mktemp -q -u)"
+  echo $eraa_ca_cert_b64 | base64 -d > "$local_ca_path" && echo "$local_ca_path" >> "$cleanup_file"
+fi
+
+local_installer="$(mktemp -q -u)"
+
+<% if $eraagent::eraa_http_proxy_hostname { -%>
+<% if $eraagent::eraa_http_proxy_user and $eraagent::eraa_http_proxy_pass { -%>
+eraa_http_proxy_value="http://<%= $eraagent::eraa_http_proxy_user %>:<%= $eraagent::eraa_http_proxy_pass %>@<%= $eraagent::eraa_http_proxy_hostname %>:<%= $eraagent::eraa_http_proxy_port %>"
+<% } else { -%>
+eraa_http_proxy_value="http://<%= $eraagent::eraa_http_proxy_hostname %>:<%= $eraagent::eraa_http_proxy_port %>"
+<% } %>
+<% } else { -%>
+eraa_http_proxy_value=""
+<% } %>
+
+echo "Downloading ESET Management Agent installer..."
+
+if test -n "$eraa_http_proxy_value"
+then
+  export use_proxy=yes
+  export http_proxy="$eraa_http_proxy_value"
+  (wget --connect-timeout 300 --no-check-certificate -O "$local_installer" "$eraa_installer_url" || wget --connect-timeout 300 --no-proxy --no-check-certificate -O "$local_installer" "$eraa_installer_url" || curl --fail --connect-timeout 300 -k "$eraa_installer_url" > "$local_installer") && echo "$local_installer" >> "$cleanup_file"
+else
+  (wget --connect-timeout 300 --no-check-certificate -O "$local_installer" "$eraa_installer_url" || curl --fail --connect-timeout 300 -k "$eraa_installer_url" > "$local_installer") && echo "$local_installer" >> "$cleanup_file"
+fi
+
+if test ! -s "$local_installer"
+then
+   echo "Failed to download installer file"
+   exit 2
+fi
+
+echo -n "Checking integrity of installer script " && echo "$eraa_installer_checksum  $local_installer" | sha1sum -c
+
+chmod +x "$local_installer"
+
+command -v sudo > /dev/null && usesudo="sudo -E" || usesudo=""
+
+export _ERAAGENT_PEER_CERT_PASSWORD="$eraa_peer_cert_pwd"
+
+echo
+echo Running installer script $local_installer
+echo
+
+$usesudo /bin/sh "$local_installer"\
+   --skip-license \
+   --hostname "$eraa_server_hostname"\
+   --port "$eraa_server_port"\
+   --cert-path "$local_cert_path"\
+   --cert-password "env:_ERAAGENT_PEER_CERT_PASSWORD"\
+   --cert-password-is-base64\
+   --initial-static-group "$eraa_initial_sg_token"\
+<% if $eraagent::eraa_http_proxy_hostname { -%>
+<% if $eraagent::eraa_http_proxy_auth { -%>
+   --proxy-hostname "<%= $eraagent::eraa_http_proxy_hostname %>" --proxy-port <%= $eraagent::eraa_http_proxy_port %> --proxy-user "<%= $eraagent::eraa_http_proxy_user %>" --proxy-password "<%= $eraagent::eraa_http_proxy_pass %>" \
+<% } else { -%>
+   --proxy-hostname "<%= $eraagent::eraa_http_proxy_hostname %>" --proxy-port <%= $eraagent::eraa_http_proxy_port %> \
+<% } -%>
+<% } -%>
+   --enable-imp-program\
+   $(test -n "$local_ca_path" && echo --cert-auth-path "$local_ca_path")\
+   $(test -n "$eraa_product_uuid" && echo --product-guid "$eraa_product_uuid")\
+   $(test -n "$eraa_policy_data" && echo --custom-policy "$eraa_policy_data")\
+   $additional_params
+

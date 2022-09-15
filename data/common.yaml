@@ -1,0 +1,12 @@
+---
+eraagent::eraa_server_company_name: ""
+eraagent::eraa_server_port: "2222"
+eraagent::eraa_http_proxy_hostname: ""
+eraagent::eraa_http_proxy_port: "3128"
+eraagent::service_enable: true
+eraagent::service_ensure: running
+eraagent::service_manage: true
+eraagent::service_name: eraagent
+eraagent::service_provider: ~
+eraagent::service_hasstatus: true
+eraagent::service_hasrestart: true
