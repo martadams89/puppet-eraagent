@@ -33,7 +33,7 @@
 #   include eraagent
 class eraagent(
   String $eraa_server_hostname,
-  String $eraa_server_port, 
+  String $eraa_server_port,
   Optional[String] $eraa_server_company_name = undef,
   Optional[String] $eraa_http_proxy_hostname = undef,
   Optional[String] $eraa_http_proxy_port = undef,
@@ -53,7 +53,7 @@ class eraagent(
   Boolean $service_hasstatus,
   Boolean $service_hasrestart
 ){
-  
+
   contain eraagent::install
   contain eraagent::service
 
