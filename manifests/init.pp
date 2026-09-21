@@ -34,24 +34,24 @@
 class eraagent(
   String $eraa_server_hostname,
   String $eraa_server_port,
+  String $eraa_peer_cert_b64,
+  String $eraa_ca_cert_b64,
+  String $eraa_initial_sg_token,
+  Boolean $service_enable,
+  Enum['running', 'stopped'] $service_ensure,
+  Boolean $service_manage,
+  String $service_name,
+  Boolean $service_hasstatus,
+  Boolean $service_hasrestart,
   Optional[String] $eraa_server_company_name = undef,
   Optional[String] $eraa_http_proxy_hostname = undef,
   Optional[String] $eraa_http_proxy_port = undef,
   Optional[String] $eraa_http_proxy_user = undef,
   Optional[String] $eraa_http_proxy_pass = undef,
-  String $eraa_peer_cert_b64,
   String $eraa_peer_cert_pwd = undef,
-  String $eraa_ca_cert_b64,
   String $eraa_product_uuid = undef,
-  String $eraa_initial_sg_token,
   Optional[String] $eraa_policy_data = undef,
-  Boolean $service_enable,
-  Enum['running', 'stopped'] $service_ensure,
-  Boolean $service_manage,
-  String $service_name,
-  Optional[String] $service_provider = undef,
-  Boolean $service_hasstatus,
-  Boolean $service_hasrestart
+  Optional[String] $service_provider = undef
 ){
 
   contain eraagent::install
