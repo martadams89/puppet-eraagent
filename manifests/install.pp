@@ -1,10 +1,10 @@
 # @summary A short summary of the purpose of this class
 #
 # This class installs the eset management agent
-# 
+#
 class eraagent::install {
 
-  if ! $eraagent_path {
+  if ! $::eraagent_path {
 
     file { '/tmp/esmcagentinstall.sh':
       ensure  => present,

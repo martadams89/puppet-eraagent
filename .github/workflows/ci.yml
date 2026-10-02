@@ -1,0 +1,32 @@
+name: CI
+
+# rake spec is intentionally omitted: rspec-puppet-facts' on_supported_os
+# fails at load time because jgrep (pulled in by facterdb) can't parse its
+# own bundled fixture data under any currently-installable json gem version
+# (duplicate JSON keys, rejected since json 2.21). See the commit that
+# added this comment for the full trace. validate/lint/metadata_lint still
+# give this repo a real merge gate; restoring spec needs a facterdb/
+# rspec-puppet-facts upgrade that puppet-module-posix-dev-r2.7 doesn't
+# currently allow.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install libcurl dev headers (needed by the patron native gem)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7'
+          bundler-cache: true
+      - run: bundle exec rake validate lint metadata_lint
