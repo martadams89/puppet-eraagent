@@ -11,6 +11,12 @@
   "platformAutomerge": true,
   "packageRules": [
     {
+      "description": "Hold Ruby major bumps: the puppet-module-posix-default-r<minor> and -dev-r<minor> meta-gems are only published for r2.7 and earlier, so CI is pinned to Ruby 2.7 and a Ruby 4.0 bump fails at bundle install. Remove once the Gemfile no longer depends on those meta-gems.",
+      "matchDepNames": ["ruby"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "CI is the gate, not semver — every update type auto-merges once required checks are green.",
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
