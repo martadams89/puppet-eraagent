@@ -7,6 +7,16 @@
   ],
   "labels": ["dependencies"],
   "prHourlyLimit": 3,
+  "automerge": true,
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "description": "CI is the gate, not semver — every update type auto-merges once required checks are green.",
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "platformAutomerge": true
+    }
+  ],
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
