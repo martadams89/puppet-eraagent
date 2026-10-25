@@ -23,6 +23,8 @@ group :development do
   gem "json", '= 3.1.0',                                         require: false if Gem::Version.new(RUBY_VERSION.dup) == Gem::Version.new('2.1.9')
   gem "json", '= 3.1.0',                                         require: false if Gem::Requirement.create('~> 2.4.2').satisfied_by?(Gem::Version.new(RUBY_VERSION.dup))
   gem "json", '= 3.1.0',                                         require: false if Gem::Requirement.create(['>= 2.5.0', '< 2.7.0']).satisfied_by?(Gem::Version.new(RUBY_VERSION.dup))
+  # net-ssh 8 needs openssl >= 3.2, whose frozen SSLContext::DEFAULT_PARAMS breaks Puppet 7's monkey patch.
+  gem "net-ssh", '< 8',                                          require: false
   gem "rb-readline", '= 0.5.5',                                  require: false, platforms: [:mswin, :mingw, :x64_mingw]
   gem "puppet-module-posix-default-r#{minor_version}", '~> 0.4', require: false, platforms: [:ruby]
   gem "puppet-module-posix-dev-r#{minor_version}", '~> 0.4',     require: false, platforms: [:ruby]
