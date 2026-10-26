@@ -17,6 +17,16 @@
       "enabled": false
     },
     {
+      "description": "Hold net-ssh at < 8: net-ssh 8 requires openssl >= 3.2, whose frozen SSLContext::DEFAULT_PARAMS makes Puppet 7's monkey patch raise FrozenError on load. Remove once the module moves off Puppet 7.",
+      "matchDepNames": ["net-ssh"],
+      "enabled": false
+    },
+    {
+      "description": "Hold the CI runner image at ubuntu-24.04: ubuntu 26.04 has no prebuilt Ruby 2.7 for ruby/setup-ruby. Remove once the module moves off Ruby 2.7.",
+      "matchDepNames": ["ubuntu"],
+      "enabled": false
+    },
+    {
       "description": "CI is the gate, not semver — every update type auto-merges once required checks are green.",
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
